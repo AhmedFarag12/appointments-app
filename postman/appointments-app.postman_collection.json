@@ -1,0 +1,380 @@
+{
+  "info": {
+    "name": "Appointments App API",
+    "description": "NestJS + MongoDB appointments API.\n\nRun in order: Register Provider → Register Customer → Create Provider Profile → Get Slots → Book Appointment → Confirm → Complete.\n\nTokens and IDs are saved to collection variables automatically by the test scripts.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000" },
+    { "key": "customerToken", "value": "" },
+    { "key": "providerToken", "value": "" },
+    { "key": "providerId", "value": "" },
+    { "key": "appointmentId", "value": "" },
+    { "key": "slotDate", "value": "" },
+    { "key": "slotTime", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register Provider",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('providerEmail', `provider${Date.now()}@example.com`);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('providerToken', pm.response.json().data.accessToken);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Dr. Ahmed\",\n  \"email\": \"{{providerEmail}}\",\n  \"password\": \"secret123\",\n  \"role\": \"provider\",\n  \"phone\": \"01000000000\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/register"
+          }
+        },
+        {
+          "name": "Register Customer",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('customerEmail', `customer${Date.now()}@example.com`);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('customerToken', pm.response.json().data.accessToken);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Sara Customer\",\n  \"email\": \"{{customerEmail}}\",\n  \"password\": \"secret123\",\n  \"role\": \"customer\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/register"
+          }
+        },
+        {
+          "name": "Login (Customer)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "pm.collectionVariables.set('customerToken', pm.response.json().data.accessToken);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{customerEmail}}\",\n  \"password\": \"secret123\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/login"
+          }
+        },
+        {
+          "name": "Login (Provider)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "pm.collectionVariables.set('providerToken', pm.response.json().data.accessToken);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{providerEmail}}\",\n  \"password\": \"secret123\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/login"
+          }
+        },
+        {
+          "name": "Me",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{customerToken}}", "type": "string" }]
+            },
+            "method": "GET",
+            "url": "{{baseUrl}}/auth/me"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Providers",
+      "item": [
+        {
+          "name": "List Providers",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/providers?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["providers"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" },
+                { "key": "specialty", "value": "Dentist", "disabled": true },
+                { "key": "search", "value": "smile", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Provider Profile (provider only)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('providerId', pm.response.json().data._id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{providerToken}}", "type": "string" }]
+            },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"businessName\": \"Smile Dental Clinic\",\n  \"specialty\": \"Dentist\",\n  \"description\": \"Family dental care\",\n  \"phone\": \"01000000000\",\n  \"address\": \"Nasr City, Cairo\",\n  \"slotDuration\": 30,\n  \"workingHours\": [\n    { \"day\": 0, \"start\": \"09:00\", \"end\": \"17:00\" },\n    { \"day\": 1, \"start\": \"09:00\", \"end\": \"17:00\" },\n    { \"day\": 2, \"start\": \"09:00\", \"end\": \"17:00\" },\n    { \"day\": 3, \"start\": \"09:00\", \"end\": \"17:00\" },\n    { \"day\": 4, \"start\": \"09:00\", \"end\": \"13:00\" },\n    { \"day\": 6, \"start\": \"10:00\", \"end\": \"14:00\" }\n  ]\n}"
+            },
+            "url": "{{baseUrl}}/providers"
+          }
+        },
+        {
+          "name": "Get Provider",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/providers/{{providerId}}"
+          }
+        },
+        {
+          "name": "Update Provider (owner only)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{providerToken}}", "type": "string" }]
+            },
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"description\": \"Family & cosmetic dental care\",\n  \"slotDuration\": 30\n}"
+            },
+            "url": "{{baseUrl}}/providers/{{providerId}}"
+          }
+        },
+        {
+          "name": "Available Slots",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Default to tomorrow if slotDate isn't set",
+                  "if (!pm.collectionVariables.get('slotDate')) {",
+                  "  const d = new Date(Date.now() + 864e5);",
+                  "  pm.collectionVariables.set('slotDate', d.toISOString().slice(0, 10));",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const { slots } = pm.response.json().data;",
+                  "if (slots.length) pm.collectionVariables.set('slotTime', slots[0].startTime);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/providers/{{providerId}}/slots?date={{slotDate}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["providers", "{{providerId}}", "slots"],
+              "query": [{ "key": "date", "value": "{{slotDate}}" }]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Appointments",
+      "item": [
+        {
+          "name": "Book Appointment (customer)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('appointmentId', pm.response.json().data._id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{customerToken}}", "type": "string" }]
+            },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"providerId\": \"{{providerId}}\",\n  \"date\": \"{{slotDate}}\",\n  \"startTime\": \"{{slotTime}}\",\n  \"notes\": \"Tooth pain on the left side\"\n}"
+            },
+            "url": "{{baseUrl}}/appointments"
+          }
+        },
+        {
+          "name": "My Appointments (customer)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{customerToken}}", "type": "string" }]
+            },
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/appointments?page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["appointments"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" },
+                { "key": "status", "value": "pending", "disabled": true },
+                { "key": "date", "value": "{{slotDate}}", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "My Appointments (provider)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{providerToken}}", "type": "string" }]
+            },
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/appointments",
+              "host": ["{{baseUrl}}"],
+              "path": ["appointments"],
+              "query": [
+                { "key": "status", "value": "pending", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Appointment",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{customerToken}}", "type": "string" }]
+            },
+            "method": "GET",
+            "url": "{{baseUrl}}/appointments/{{appointmentId}}"
+          }
+        },
+        {
+          "name": "Confirm (provider)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{providerToken}}", "type": "string" }]
+            },
+            "method": "PATCH",
+            "url": "{{baseUrl}}/appointments/{{appointmentId}}/confirm"
+          }
+        },
+        {
+          "name": "Complete (provider)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{providerToken}}", "type": "string" }]
+            },
+            "method": "PATCH",
+            "url": "{{baseUrl}}/appointments/{{appointmentId}}/complete"
+          }
+        },
+        {
+          "name": "Cancel (customer or provider)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{customerToken}}", "type": "string" }]
+            },
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Can't make it\"\n}"
+            },
+            "url": "{{baseUrl}}/appointments/{{appointmentId}}/cancel"
+          }
+        }
+      ]
+    }
+  ]
+}
