@@ -53,18 +53,18 @@ async function api(method, path, body) {
     },
     body: body ? JSON.stringify(body) : undefined,
   });
-  const body = await res.json().catch(() => null);
+  const json = await res.json().catch(() => null);
   if (res.status === 401 && state.token) {
     logout();
     throw new Error('انتهت الجلسة، سجّل الدخول مرة أخرى');
   }
   if (!res.ok) {
-    const msg = body?.errors?.length ? body.errors.join('، ') : body?.message;
+    const msg = json?.errors?.length ? json.errors.join('، ') : json?.message;
     const err = new Error(msg || 'حدث خطأ');
     err.status = res.status;
     throw err;
   }
-  return body?.data;
+  return json?.data;
 }
 
 function setSession({ accessToken, user }) {
