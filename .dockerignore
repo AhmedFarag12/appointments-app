@@ -11,3 +11,5 @@ postman
 *.tsbuildinfo
 Dockerfile
 docker-compose.yml
+scripts
+Jenkinsfile
