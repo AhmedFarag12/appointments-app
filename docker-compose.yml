@@ -15,7 +15,7 @@ services:
         condition: service_healthy
 
   mongo:
-    image: mongo:8
+    image: mongo:7
     restart: unless-stopped
     volumes:
       - mongo-data:/data/db
@@ -25,6 +25,5 @@ services:
       timeout: 5s
       retries: 10
       start_period: 40s
-
 volumes:
   mongo-data:
