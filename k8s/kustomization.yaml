@@ -1,0 +1,27 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: appointments
+
+resources:
+  - namespace.yaml
+  - mongo.yaml
+  - app.yaml
+
+configMapGenerator:
+  - name: app-config
+    literals:
+      - PORT=3000
+      - MONGODB_URI=mongodb://mongo:27017
+      - MONGODB_DB_NAME=appointments
+      - JWT_EXPIRES_IN=7d
+
+# secrets.env is gitignored — copy secrets.env.example and fill it in.
+secretGenerator:
+  - name: app-secrets
+    envs:
+      - secrets.env
+
+images:
+  - name: appointments-app
+    newTag: latest
