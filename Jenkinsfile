@@ -18,9 +18,10 @@ pipeline {
     }
 
     environment {
+        IMAGE_NAME           = "${params.IMAGE_NAME ?: 'appointments-app'}"
+        REGISTRY_URL         = "${params.REGISTRY_URL ?: ''}"
         IMAGE_TAG            = "${env.BUILD_NUMBER}-${env.GIT_COMMIT?.take(7) ?: 'local'}"
         COMPOSE_PROJECT_NAME = "appointments-ci-${env.BUILD_NUMBER}"
-        // Keep the smoke-test port away from anything already running on the agent.
         PORT                 = "${13000 + (env.BUILD_NUMBER as int) % 1000}"
         JWT_SECRET           = 'ci-only-secret'
     }
